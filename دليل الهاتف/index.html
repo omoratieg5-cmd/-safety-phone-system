@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>دليل هاتف الموظفين - مدار وليبيانا فقط</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f5f7fa; color: #333; line-height: 1.6; padding: 12px; max-width: 1100px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 18px; padding: 16px; background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%); color: white; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        h1 { margin-bottom: 6px; font-size: 1.6rem; }
+        .subtitle { font-size: 0.95rem; opacity: 0.95; }
+        .container { display: flex; gap: 18px; flex-wrap: wrap; }
+        .left-panel, .right-panel { background-color: white; padding: 18px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.04); }
+        .left-panel { flex: 1 1 320px; min-width: 280px; }
+        .right-panel { flex: 2 1 480px; min-width: 280px; }
+        h2 { color: #2c3e50; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #3498db; display: flex; align-items: center; gap: 10px; font-size: 1.05rem; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; color: #2c3e50; font-size: 0.92rem; }
+        label.required::after { content: " *"; color: #e74c3c; }
+        input, select, textarea { width: 100%; padding: 9px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
+        .form-row { display: flex; gap: 10px; flex-wrap: wrap; }
+        .form-row .form-group { flex: 1; min-width: 120px; }
+        .buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+        button { padding: 10px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; }
+        .add-btn { background-color: #3498db; color: white; }
+        .update-btn { background-color: #27ae60; color: white; }
+        .cancel-btn { background-color: #f39c12; color: white; }
+        .search-box { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+        .search-box input { flex: 1; min-width: 180px; }
+        .contact-list { max-height: 520px; overflow-y: auto; margin-top: 10px; border: 1px solid #eee; border-radius: 6px; }
+        .contact-item { padding: 12px; border-bottom: 1px solid #eee; transition: background-color 0.15s; }
+        .contact-item:hover { background-color: #f9f9f9; }
+        .contact-header { display:flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px; }
+        .contact-name { color: #2c3e50; font-size: 1rem; font-weight: 700; }
+        .employee-id { background-color: #3498db; color: white; padding: 3px 8px; border-radius: 16px; font-size: 0.82rem; font-weight: 700; }
+        .detail-item { font-size: 0.9rem; margin: 4px 0; display:flex; gap:8px; align-items:center; flex-wrap: wrap; }
+        .action-buttons { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+        .action-btn { padding: 6px 10px; border-radius: 6px; border: none; font-weight:600; cursor:pointer; font-size:0.85rem; }
+        .edit-btn { background:#f39c12; color:white; }
+        .delete-btn { background:#e74c3c; color:white; }
+        .phone-icon, .wa-icon { margin-left: 4px; cursor: pointer; padding: 2px 5px; border-radius: 4px; }
+        .phone-icon:hover { background-color: #d4edda; }
+        .wa-icon:hover { background-color: #d4edda; }
+        .empty-list { text-align:center; padding: 30px 10px; color:#777; }
+        .stats { display:flex; gap:10px; margin-top:12px; padding:10px; background:#f8f9fa; border-radius:8px; }
+        .stat-item { text-align:center; flex:1; min-width:100px; }
+        .stat-value { font-size:1.2rem; font-weight:800; color:#3498db; }
+        .message { padding:10px 12px; margin-bottom:10px; border-radius:6px; display:none; font-weight:700; }
+        .success { background:#d4edda; color:#155724; border:1px solid #c3e6cb; }
+        .error { background:#f8d7da; color:#721c24; border:1px solid #f5c6cb; }
+        footer { text-align:center; margin-top:18px; padding:12px; color:#666; font-size:0.85rem; }
+        @media (max-width: 720px) { body { padding:10px; } header h1 { font-size:1.2rem; } .container { flex-direction: column; } .search-box button { flex:1; } }
+    </style>
+</head>
+<body>
+    <header>
+        <h1><i class="fas fa-address-book"></i> دليل هاتف الموظفين</h1>
+        <p class="subtitle">مع دعم أرقام مدار وليبيانا فقط - جميع الأرقام المحمولة اختيارية</p>
+    </header>
+    <div class="container">
+        <!-- اللوحة اليسرى: نموذج الإدخال -->
+        <div class="left-panel">
+            <h2><i class="fas fa-user-plus"></i> بيانات الموظف</h2>
+            <div id="message" class="message"></div>
+            <div class="form-group">
+                <label for="name" class="required">اسم الموظف الكامل</label>
+                <input type="text" id="name" placeholder="أدخل الاسم الكامل للموظف">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="employeeId">رقم التوظيف (اختياري)</label>
+                    <input type="text" id="employeeId" placeholder="رقم الموظف">
+                </div>
+                <div class="form-group">
+                    <label for="field">التخصص (اختياري)</label>
+                    <input type="text" id="field" placeholder="التخصص أو الحقل">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="department" class="required">القسم</label>
+                    <select id="department">
+                        <option value="">اختر القسم</option>
+                        <option value="قسم الإنتاج">قسم الإنتاج</option>
+                        <option value="قسم الصيانة">قسم الصيانة</option>
+                        <option value="قسم السلامة">قسم السلامة</option>
+                        <option value="قسم الإطفاء">قسم الإطفاء</option>
+                        <option value="قسم المخازن">قسم المخازن</option>
+                        <option value="قسم الاتصالات">قسم الاتصالات</option>
+                        <option value="الأمن الصناعي">الأمن الصناعي</option>
+                        <option value="قسم الخدمات">قسم الخدمات</option>
+                        <option value="قسم التموين">قسم التموين</option>
+                        <option value="الطبية">الطبية</option>
+                        <option value="التدريب">التدريب</option>
+                        <option value="محطة الكهرباء">محطة الكهرباء</option>
+                        <option value="أقسام أخرى">أقسام أخرى</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="workPhone" class="required">هاتف العمل</label>
+                    <input type="text" id="workPhone" placeholder="رقم هاتف العمل">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="roomPhone">هاتف الحجرة (اختياري)</label>
+                    <input type="text" id="roomPhone" placeholder="هاتف الحجرة الداخلي">
+                </div>
+                <!-- تم حذف حقل النقال العادي -->
+                <div class="form-group">
+                    <label for="mobileMadaar">رقم مدار (اختياري)</label>
+                    <input type="text" id="mobileMadaar" placeholder="مثال: 0912345678">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="mobileLibyana">رقم ليبيانا (اختياري)</label>
+                    <input type="text" id="mobileLibyana" placeholder="مثال: 0922345678">
+                </div>
+                <div class="form-group">
+                    <!-- فراغ للمحاذاة إن أمكن -->
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="notes">ملاحظات (اختياري)</label>
+                <textarea id="notes" placeholder="أي ملاحظات إضافية" rows="2"></textarea>
+            </div>
+            <div class="form-group">
+                <label for="extension">القاطع الداخلي (اختياري)</label>
+                <input type="text" id="extension" placeholder="رقم القاطع الداخلي">
+            </div>
+            <div class="buttons">
+                <button id="addBtn" type="button" class="add-btn"><i class="fas fa-plus"></i> إضافة موظف</button>
+                <button id="updateBtn" type="button" class="update-btn" style="display:none;"><i class="fas fa-save"></i> حفظ التعديل</button>
+                <button id="cancelBtn" type="button" class="cancel-btn" style="display:none;"><i class="fas fa-times"></i> إلغاء</button>
+            </div>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalEmployees">0</div>
+                    <div class="stat-label">إجمالي الموظفين</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="departmentsCount">0</div>
+                    <div class="stat-label">عدد الأقسام</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- اللوحة اليمنى: قائمة الموظفين -->
+        <div class="right-panel">
+            <h2><i class="fas fa-users"></i> قائمة الموظفين</h2>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="ابحث بالاسم، الرقم، أو القسم...">
+                <button id="searchBtn" type="button" class="add-btn"><i class="fas fa-search"></i> بحث</button>
+                <button id="clearSearchBtn" type="button" class="cancel-btn"><i class="fas fa-eraser"></i> مسح</button>
+                <button id="refreshBtn" type="button" style="background-color:#2ecc71; color:white;"><i class="fas fa-sync-alt"></i> تحديث</button>
+                <button id="deleteAllBtn" type="button" style="background-color:#e74c3c; color:white;"><i class="fas fa-trash-alt"></i> مسح الكل</button>
+            </div>
+            <div class="filters" style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:140px;">
+                    <label for="filterDept">تصفية بالقسم</label>
+                    <select id="filterDept">
+                        <option value="">جميع الأقسام</option>
+                        <option value="قسم الإنتاج">قسم الإنتاج</option>
+                        <option value="قسم الصيانة">قسم الصيانة</option>
+                        <option value="قسم السلامة">قسم السلامة</option>
+                        <option value="قسم الإطفاء">قسم الإطفاء</option>
+                        <option value="قسم المخازن">قسم المخازن</option>
+                        <option value="قسم الاتصالات">قسم الاتصالات</option>
+                        <option value="الأمن الصناعي">الأمن الصناعي</option>
+                        <option value="قسم الخدمات">قسم الخدمات</option>
+                        <option value="قسم التموين">قسم التموين</option>
+                        <option value="الطبية">الطبية</option>
+                        <option value="التدريب">التدريب</option>
+                        <option value="محطة الكهرباء">محطة الكهرباء</option>
+                        <option value="أقسام أخرى">أقسام أخرى</option>
+                    </select>
+                </div>
+                <div style="flex:1; min-width:140px;">
+                    <label for="sortBy">ترتيب حسب</label>
+                    <select id="sortBy">
+                        <option value="name">الاسم (أ-ي)</option>
+                        <option value="nameDesc">الاسم (ي-أ)</option>
+                        <option value="id">رقم التوظيف</option>
+                        <option value="department">القسم</option>
+                    </select>
+                </div>
+            </div>
+            <div class="contact-list" id="contactList">
+                <div class="empty-list"><i class="fas fa-users"></i><h3>جارٍ تحميل البيانات...</h3></div>
+            </div>
+        </div>
+    </div>
+    <footer>
+        <p>دليل هاتف الموظفين - إصدار مدار وليبيانا فقط | جميع الأرقام المحمولة اختيارية</p>
+    </footer>
+
+    <script>
+        // ------------------ إعدادات Firebase ------------------
+        const firebaseConfig = {
+            apiKey: "AIzaSyDxNjHSgnpY_zgCcO2BjvDw8bFxba1SGUA",
+            authDomain: "company-phonebook-18495.firebaseapp.com",
+            databaseURL: "https://company-phonebook-18495-default-rtdb.firebaseio.com",
+            projectId: "company-phonebook-18495",
+            storageBucket: "company-phonebook-18495.firebasestorage.app",
+            messagingSenderId: "978246787214",
+            appId: "1:978246787214:web:4f19abdb4fd46c181129df",
+            measurementId: "G-SNVPXKEKRE"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const dbRef = firebase.database().ref('phonebook');
+
+        // ------------------ المتغيرات العامة ------------------
+        let employees = [];
+        let currentEditId = null;
+
+        // عناصر DOM
+        const nameInput = document.getElementById('name');
+        const employeeIdInput = document.getElementById('employeeId');
+        const fieldInput = document.getElementById('field');
+        const departmentInput = document.getElementById('department');
+        const workPhoneInput = document.getElementById('workPhone');
+        const roomPhoneInput = document.getElementById('roomPhone');
+        const mobileMadaarInput = document.getElementById('mobileMadaar');
+        const mobileLibyanaInput = document.getElementById('mobileLibyana');
+        const notesInput = document.getElementById('notes');
+        const extensionInput = document.getElementById('extension');
+        const addBtn = document.getElementById('addBtn');
+        const updateBtn = document.getElementById('updateBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const deleteAllBtn = document.getElementById('deleteAllBtn');
+        const filterDeptInput = document.getElementById('filterDept');
+        const sortByInput = document.getElementById('sortBy');
+        const contactList = document.getElementById('contactList');
+        const totalEmployeesEl = document.getElementById('totalEmployees');
+        const departmentsCountEl = document.getElementById('departmentsCount');
+        const messageEl = document.getElementById('message');
+
+        // ------------------ دوال مساعدة ------------------
+        function showMessage(text, type) {
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+            messageEl.style.display = 'block';
+            setTimeout(() => messageEl.style.display = 'none', 3000);
+        }
+
+        // التحقق من الحقول المطلوبة (الاسم، القسم، هاتف العمل فقط)
+        function validateRequired() {
+            const name = nameInput.value.trim();
+            const dept = departmentInput.value;
+            const workPhone = workPhoneInput.value.trim();
+            if (!name || !dept || !workPhone) {
+                showMessage('الحقول المطلوبة: الاسم، القسم، هاتف العمل', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        // توليد معرف فريد
+        function generateUniqueId() {
+            return Date.now() + Math.floor(Math.random() * 1000);
+        }
+
+        // حفظ نسخة احتياطية محلية
+        function saveBackup() {
+            localStorage.setItem('phonebook-backup', JSON.stringify(employees));
+        }
+
+        // ------------------ الاستماع لتحديثات Firebase ------------------
+        dbRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                employees = Object.keys(data).map(key => ({ id: Number(key), ...data[key] }));
+                employees.sort((a, b) => a.id - b.id);
+            } else {
+                employees = [];
+            }
+            renderEmployees();
+            updateStats();
+        }, (error) => {
+            console.error('Firebase read error:', error);
+            showMessage('خطأ في الاتصال بقاعدة البيانات، جاري التحميل من النسخة المحلية', 'error');
+            const saved = localStorage.getItem('phonebook-backup');
+            if (saved) {
+                employees = JSON.parse(saved);
+                renderEmployees();
+                updateStats();
+            }
+        });
+
+        // ------------------ إضافة موظف ------------------
+        function addEmployee() {
+            if (!validateRequired()) return;
+
+            const name = nameInput.value.trim();
+            const employeeId = employeeIdInput.value.trim() || null;
+            const field = fieldInput.value.trim() || null;
+            const department = departmentInput.value;
+            const workPhone = workPhoneInput.value.trim();
+            const roomPhone = roomPhoneInput.value.trim() || null;
+            const mobileMadaar = mobileMadaarInput.value.trim() || null;
+            const mobileLibyana = mobileLibyanaInput.value.trim() || null;
+            const notes = notesInput.value.trim() || null;
+            const extension = extensionInput.value.trim() || null;
+
+            const newId = generateUniqueId();
+            const newEmployee = {
+                name,
+                employeeId,
+                field,
+                department,
+                workPhone,
+                roomPhone,
+                mobileMadaar,
+                mobileLibyana,
+                notes,
+                extension,
+                addedDate: new Date().toISOString().split('T')[0]
+            };
+
+            dbRef.child(newId).set(newEmployee)
+                .then(() => {
+                    employees.push({ id: newId, ...newEmployee });
+                    employees.sort((a, b) => a.id - b.id);
+                    renderEmployees();
+                    updateStats();
+                    saveBackup();
+                    clearForm();
+                    showMessage('تمت الإضافة بنجاح', 'success');
+                })
+                .catch(error => {
+                    console.error('Add error:', error);
+                    showMessage('فشل الإضافة: ' + error.message, 'error');
+                });
+        }
+
+        // ------------------ تحديث موظف ------------------
+        function updateEmployee() {
+            if (!currentEditId || !validateRequired()) return;
+
+            const name = nameInput.value.trim();
+            const employeeId = employeeIdInput.value.trim() || null;
+            const field = fieldInput.value.trim() || null;
+            const department = departmentInput.value;
+            const workPhone = workPhoneInput.value.trim();
+            const roomPhone = roomPhoneInput.value.trim() || null;
+            const mobileMadaar = mobileMadaarInput.value.trim() || null;
+            const mobileLibyana = mobileLibyanaInput.value.trim() || null;
+            const notes = notesInput.value.trim() || null;
+            const extension = extensionInput.value.trim() || null;
+
+            const updatedData = {
+                name,
+                employeeId,
+                field,
+                department,
+                workPhone,
+                roomPhone,
+                mobileMadaar,
+                mobileLibyana,
+                notes,
+                extension
+            };
+
+            dbRef.child(currentEditId).update(updatedData)
+                .then(() => {
+                    const index = employees.findIndex(e => e.id === currentEditId);
+                    if (index !== -1) {
+                        employees[index] = { id: currentEditId, ...updatedData };
+                    }
+                    renderEmployees();
+                    updateStats();
+                    saveBackup();
+                    cancelEdit();
+                    showMessage('تم التعديل بنجاح', 'success');
+                })
+                .catch(error => {
+                    console.error('Update error:', error);
+                    showMessage('فشل التعديل', 'error');
+                });
+        }
+
+        // ------------------ حذف موظف ------------------
+        function deleteEmployee(id) {
+            if (!confirm('هل أنت متأكد من حذف هذا الموظف؟')) return;
+
+            dbRef.child(id).remove()
+                .then(() => {
+                    employees = employees.filter(e => e.id !== id);
+                    renderEmployees();
+                    updateStats();
+                    saveBackup();
+                    if (currentEditId === id) cancelEdit();
+                    showMessage('تم الحذف', 'success');
+                })
+                .catch(error => {
+                    console.error('Delete error:', error);
+                    showMessage('فشل الحذف', 'error');
+                });
+        }
+
+        // ------------------ حذف جميع الموظفين ------------------
+        function deleteAllEmployees() {
+            if (!confirm('⚠️ تحذير! سيتم حذف جميع الموظفين بشكل نهائي. هل أنت متأكد؟')) return;
+            dbRef.remove()
+                .then(() => {
+                    employees = [];
+                    localStorage.removeItem('phonebook-backup');
+                    renderEmployees();
+                    updateStats();
+                    if (currentEditId) cancelEdit();
+                    showMessage('تم حذف الكل', 'success');
+                })
+                .catch(error => {
+                    console.error('Delete all error:', error);
+                    showMessage('فشل الاتصال، تم الحذف محلياً', 'error');
+                });
+        }
+
+        // ------------------ ملء النموذج للتعديل ------------------
+        function populateEditForm(id) {
+            const emp = employees.find(e => e.id === id);
+            if (!emp) return;
+
+            nameInput.value = emp.name || '';
+            employeeIdInput.value = emp.employeeId || '';
+            fieldInput.value = emp.field || '';
+            departmentInput.value = emp.department || '';
+            workPhoneInput.value = emp.workPhone || '';
+            roomPhoneInput.value = emp.roomPhone || '';
+            mobileMadaarInput.value = emp.mobileMadaar || '';
+            mobileLibyanaInput.value = emp.mobileLibyana || '';
+            notesInput.value = emp.notes || '';
+            extensionInput.value = emp.extension || '';
+
+            currentEditId = emp.id;
+            addBtn.style.display = 'none';
+            updateBtn.style.display = 'inline-flex';
+            cancelBtn.style.display = 'inline-flex';
+        }
+
+        function cancelEdit() {
+            clearForm();
+            currentEditId = null;
+            addBtn.style.display = 'inline-flex';
+            updateBtn.style.display = 'none';
+            cancelBtn.style.display = 'none';
+        }
+
+        function clearForm() {
+            nameInput.value = '';
+            employeeIdInput.value = '';
+            fieldInput.value = '';
+            departmentInput.value = '';
+            workPhoneInput.value = '';
+            roomPhoneInput.value = '';
+            mobileMadaarInput.value = '';
+            mobileLibyanaInput.value = '';
+            notesInput.value = '';
+            extensionInput.value = '';
+        }
+
+        // دوال الاتصال
+        function callPhone(phone) {
+            if (phone) window.location.href = `tel:${phone}`;
+            else showMessage('لا يوجد رقم', 'error');
+        }
+
+        function openWhatsApp(phone) {
+            if (phone) {
+                const cleanPhone = phone.replace(/[^0-9]/g, '');
+                window.open(`https://wa.me/${cleanPhone}`, '_blank');
+            } else {
+                showMessage('لا يوجد رقم واتساب', 'error');
+            }
+        }
+
+        // ------------------ تصفية وترتيب وعرض ------------------
+        function filterEmployees() {
+            renderEmployees(true);
+        }
+
+        function clearSearch() {
+            searchInput.value = '';
+            filterDeptInput.value = '';
+            sortByInput.value = 'name';
+            renderEmployees();
+        }
+
+        function refreshData() {
+            dbRef.once('value').then(snapshot => {
+                const data = snapshot.val();
+                employees = data ? Object.keys(data).map(key => ({ id: Number(key), ...data[key] })) : [];
+                employees.sort((a, b) => a.id - b.id);
+                renderEmployees();
+                updateStats();
+                showMessage('تم تحديث البيانات', 'success');
+            }).catch(error => {
+                console.error('Refresh error:', error);
+                showMessage('فشل التحديث', 'error');
+            });
+        }
+
+        function renderEmployees(useFilters = false) {
+            let filtered = [...employees];
+
+            if (useFilters) {
+                const term = searchInput.value.trim().toLowerCase();
+                const dept = filterDeptInput.value;
+
+                if (term) {
+                    filtered = filtered.filter(e =>
+                        e.name.toLowerCase().includes(term) ||
+                        (e.employeeId && e.employeeId.toLowerCase().includes(term)) ||
+                        (e.department && e.department.toLowerCase().includes(term))
+                    );
+                }
+
+                if (dept) {
+                    filtered = filtered.filter(e => e.department === dept);
+                }
+
+                const sort = sortByInput.value;
+                if (sort === 'name') {
+                    filtered.sort((a, b) => a.name.localeCompare(b.name, 'ar'));
+                } else if (sort === 'nameDesc') {
+                    filtered.sort((a, b) => b.name.localeCompare(a.name, 'ar'));
+                } else if (sort === 'id') {
+                    filtered.sort((a, b) => (a.employeeId || '').localeCompare(b.employeeId || ''));
+                } else if (sort === 'department') {
+                    filtered.sort((a, b) => (a.department || '').localeCompare(b.department || '', 'ar'));
+                }
+            }
+
+            if (filtered.length === 0) {
+                contactList.innerHTML = `<div class="empty-list"><i class="fas fa-users"></i><h3>لا توجد نتائج</h3></div>`;
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(emp => {
+                // عرض أرقام مدار وليبيانا فقط (بدون النقال العادي)
+                const madaarLine = emp.mobileMadaar ? `
+                    <div class="detail-item">
+                        <i class="fas fa-sim-card"></i> مدار: ${emp.mobileMadaar}
+                        <span class="phone-icon" onclick="callPhone('${emp.mobileMadaar}')" title="اتصال"><i class="fas fa-phone"></i></span>
+                        <span class="wa-icon" onclick="openWhatsApp('${emp.mobileMadaar}')" title="واتساب"><i class="fab fa-whatsapp"></i></span>
+                    </div>
+                ` : '';
+
+                const libyanaLine = emp.mobileLibyana ? `
+                    <div class="detail-item">
+                        <i class="fas fa-sim-card"></i> ليبيانا: ${emp.mobileLibyana}
+                        <span class="phone-icon" onclick="callPhone('${emp.mobileLibyana}')" title="اتصال"><i class="fas fa-phone"></i></span>
+                        <span class="wa-icon" onclick="openWhatsApp('${emp.mobileLibyana}')" title="واتساب"><i class="fab fa-whatsapp"></i></span>
+                    </div>
+                ` : '';
+
+                html += `
+                    <div class="contact-item" data-id="${emp.id}">
+                        <div class="contact-header">
+                            <span class="contact-name">${emp.name}</span>
+                            <span class="employee-id">${emp.employeeId || ''}</span>
+                        </div>
+                        <div class="detail-item"><i class="fas fa-briefcase"></i> ${emp.field || '---'}</div>
+                        <div class="detail-item"><i class="fas fa-building"></i> ${emp.department}</div>
+                        <div class="detail-item"><i class="fas fa-phone"></i> عمل: ${emp.workPhone}</div>
+                        <div class="detail-item"><i class="fas fa-phone-alt"></i> حجرة: ${emp.roomPhone || '---'}</div>
+                        ${madaarLine}
+                        ${libyanaLine}
+                        <div class="detail-item"><i class="fas fa-sticky-note"></i> ${emp.notes || '---'}</div>
+                        <div class="detail-item"><i class="fas fa-expand"></i> ${emp.extension || '---'}</div>
+                        <div class="action-buttons">
+                            <button class="action-btn edit-btn"><i class="fas fa-edit"></i> تعديل</button>
+                            <button class="action-btn delete-btn"><i class="fas fa-trash"></i> حذف</button>
+                        </div>
+                    </div>
+                `;
+            });
+            contactList.innerHTML = html;
+        }
+
+        function updateStats() {
+            totalEmployeesEl.textContent = employees.length;
+            const uniqueDepts = new Set(employees.map(e => e.department));
+            departmentsCountEl.textContent = uniqueDepts.size;
+        }
+
+        // ------------------ ربط الأحداث ------------------
+        addBtn.addEventListener('click', addEmployee);
+        updateBtn.addEventListener('click', updateEmployee);
+        cancelBtn.addEventListener('click', cancelEdit);
+        searchBtn.addEventListener('click', filterEmployees);
+        clearSearchBtn.addEventListener('click', clearSearch);
+        refreshBtn.addEventListener('click', refreshData);
+        deleteAllBtn.addEventListener('click', deleteAllEmployees);
+        searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') filterEmployees(); });
+        filterDeptInput.addEventListener('change', filterEmployees);
+        sortByInput.addEventListener('change', filterEmployees);
+
+        contactList.addEventListener('click', function(e) {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            const item = btn.closest('.contact-item');
+            if (!item) return;
+            const id = Number(item.dataset.id);
+            if (btn.classList.contains('edit-btn')) {
+                populateEditForm(id);
+            } else if (btn.classList.contains('delete-btn')) {
+                deleteEmployee(id);
+            }
+        });
+
+        // جعل دوال الاتصال والواتساب عامة
+        window.callPhone = callPhone;
+        window.openWhatsApp = openWhatsApp;
+    </script>
+</body>
+</html>
